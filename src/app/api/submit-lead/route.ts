@@ -18,7 +18,20 @@ export async function POST(req: Request) {
       }
     );
 
-    const data = await internalResponse.json();
+    // Checks if response is JSON first
+    const contentType = internalResponse.headers.get("content-type");
+    let data;
+
+    if (contentType?.includes("application/json")) {
+      data = await internalResponse.json();
+    } else {
+      // If it's not JSON, get the text instead
+      const text = await internalResponse.text();
+      return NextResponse.json(
+        { error: text || "Failed to submit lead" },
+        { status: internalResponse.status }
+      );
+    }
 
     if (!internalResponse.ok) {
       return NextResponse.json(

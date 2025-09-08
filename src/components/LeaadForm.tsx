@@ -10,6 +10,7 @@ export default function LeadForm({ salesUserId }: { salesUserId: string }) {
     phone: "",
     source: "",
     notes: "",
+    address: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<{
@@ -17,24 +18,52 @@ export default function LeadForm({ salesUserId }: { salesUserId: string }) {
     text: string;
   } | null>(null);
 
+  console.log("Sales User ID in LeadForm:", salesUserId);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setMessage(null);
 
+    if (!salesUserId) {
+      setMessage({
+        type: "error",
+        text: "Authentication error. Please log in again.",
+      });
+      setIsSubmitting(false);
+      return;
+    }
     try {
+      const payload = { ...form, salesUserId };
+      console.log("Sending payload:", payload);
+
       // This calls the Portal's API route, which will forward to the Internal System
       const res = await fetch("/api/submit-lead", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, salesUserId }),
+        // send the payload at the top level (internal API expects name,email,salesUserId at root)
+        body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      const contentType = res.headers.get("content-type");
+      let data;
+
+      if (contentType?.includes("application/json")) {
+        data = await res.json();
+      } else {
+        data = { error: await res.text() };
+      }
 
       if (res.ok) {
         setMessage({ type: "success", text: "Lead submitted successfully!" });
-        setForm({ name: "", email: "", phone: "", source: "", notes: "" }); // Reset form
+        setForm({
+          name: "",
+          email: "",
+          phone: "",
+          source: "",
+          notes: "",
+          address: "",
+        }); // Reset form
       } else {
         setMessage({
           type: "error",
@@ -43,6 +72,7 @@ export default function LeadForm({ salesUserId }: { salesUserId: string }) {
       }
     } catch (error) {
       setMessage({ type: "error", text: "Network error. Please try again." });
+      console.error("Error submitting lead:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -57,7 +87,9 @@ export default function LeadForm({ salesUserId }: { salesUserId: string }) {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-2xl font-bold mb-6">Submit a New Lead</h2>
+        <h2 className="text-2xl font-bold mb-6 text-gray-900">
+          Submit a New Lead
+        </h2>
 
         {message && (
           <div
@@ -85,7 +117,7 @@ export default function LeadForm({ salesUserId }: { salesUserId: string }) {
               required
               value={form.name}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900"
             />
           </div>
 
@@ -103,7 +135,7 @@ export default function LeadForm({ salesUserId }: { salesUserId: string }) {
               required
               value={form.email}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900"
             />
           </div>
 
@@ -112,17 +144,33 @@ export default function LeadForm({ salesUserId }: { salesUserId: string }) {
               htmlFor="phone"
               className="block text-sm font-medium text-gray-700"
             >
-              Phone
+              Phone*
             </label>
             <input
               id="phone"
               name="phone"
               value={form.phone}
+              required
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900"
             />
           </div>
-
+          <div>
+            <label
+              htmlFor="address"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Address*
+            </label>
+            <input
+              id="address"
+              name="address"
+              required
+              value={form.address}
+              onChange={handleChange}
+              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+            />
+          </div>
           <div>
             <label
               htmlFor="source"
@@ -135,7 +183,7 @@ export default function LeadForm({ salesUserId }: { salesUserId: string }) {
               name="source"
               value={form.source}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900"
             />
           </div>
 
@@ -152,7 +200,7 @@ export default function LeadForm({ salesUserId }: { salesUserId: string }) {
               rows={3}
               value={form.notes}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900"
             />
           </div>
 
