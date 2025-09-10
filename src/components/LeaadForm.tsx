@@ -3,7 +3,13 @@
 
 import { useState } from "react";
 
-export default function LeadForm({ salesUserId }: { salesUserId: string }) {
+export default function LeadForm({
+  salesUserId,
+  salesUserEmail,
+}: {
+  salesUserId: string;
+  salesUserEmail?: string;
+}) {
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -34,7 +40,8 @@ export default function LeadForm({ salesUserId }: { salesUserId: string }) {
       return;
     }
     try {
-      const payload = { ...form, salesUserId };
+      // include salesUserEmail as a fallback identifier for the internal system
+      const payload = { ...form, salesUserId, salesUserEmail };
       console.log("Sending payload:", payload);
 
       // This calls the Portal's API route, which will forward to the Internal System

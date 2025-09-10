@@ -54,18 +54,18 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <Image src={logo} alt="Company Logo" className="h-10 w-auto" />
-            <h1 className="text-lg md:text-3xl  font-bold text-gray-900">
+            <h1 className="text-lg md:text-xl  font-bold text-gray-900">
               Lead Input Portal
             </h1>
           </div>
           <div className="flex items-center gap-4">
-            <p className="text-gray-700 text-sm md:text-2xl">
+            <p className="text-gray-700 text-sm md:text-xl">
               Welcome, {session.user?.name}
             </p>
 
             <button
               onClick={() => redirect("/api/auth/signout")}
-              className="text-gray-500 hover:text-gray-700 text-sm md:text-2xl"
+              className="text-gray-500 hover:text-gray-800 text-sm md:text-xl bg-gray-300 rounded-xl px-3 py-1 hover:bg-gray-400 transition"
             >
               Sign out
             </button>
@@ -76,7 +76,10 @@ export default function HomePage() {
       <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
         {/* Only render form if we have a user ID */}
         {session.user?.id ? (
-          <LeadForm salesUserId={session.user.id} />
+          <LeadForm
+            salesUserId={session.user.id}
+            salesUserEmail={session.user?.email ?? undefined}
+          />
         ) : (
           <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
             <p className="text-yellow-800">
