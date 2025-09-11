@@ -1,7 +1,8 @@
-// src/components/LeadForm.tsx (Sales Portal)
+// src/components/LeadForm.tsx (Improved)
 "use client";
 
 import { useState } from "react";
+import { User, Mail, Phone, MapPin, Globe, FileText, Send } from "lucide-react";
 
 export default function LeadForm({
   salesUserId,
@@ -24,8 +25,6 @@ export default function LeadForm({
     text: string;
   } | null>(null);
 
-  console.log("Sales User ID in LeadForm:", salesUserId);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -39,16 +38,13 @@ export default function LeadForm({
       setIsSubmitting(false);
       return;
     }
-    try {
-      // include salesUserEmail as a fallback identifier for the internal system
-      const payload = { ...form, salesUserId, salesUserEmail };
-      console.log("Sending payload:", payload);
 
-      // This calls the Portal's API route, which will forward to the Internal System
+    try {
+      const payload = { ...form, salesUserId, salesUserEmail };
+
       const res = await fetch("/api/submit-lead", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // send the payload at the top level (internal API expects name,email,salesUserId at root)
         body: JSON.stringify(payload),
       });
 
@@ -70,7 +66,7 @@ export default function LeadForm({
           source: "",
           notes: "",
           address: "",
-        }); // Reset form
+        });
       } else {
         setMessage({
           type: "error",
@@ -92,30 +88,34 @@ export default function LeadForm({
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-2xl font-bold mb-6 text-gray-900">
-          Submit a New Lead
-        </h2>
+    <div>
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-gray-900">Submit a New Lead</h2>
+        <p className="text-gray-600 mt-1">
+          Enter the details of your potential partner
+        </p>
+      </div>
 
-        {message && (
-          <div
-            className={`mb-4 p-3 rounded ${
-              message.type === "success"
-                ? "bg-green-100 text-green-700"
-                : "bg-red-100 text-red-700"
-            }`}
-          >
-            {message.text}
-          </div>
-        )}
+      {message && (
+        <div
+          className={`mb-6 p-4 rounded-lg border ${
+            message.type === "success"
+              ? "bg-green-50 border-green-200 text-green-800"
+              : "bg-red-50 border-red-200 text-red-800"
+          }`}
+        >
+          {message.text}
+        </div>
+      )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
             <label
               htmlFor="name"
-              className="block text-sm font-medium text-gray-700"
+              className="flex items-center text-sm font-medium text-gray-700"
             >
+              <User className="h-4 w-4 mr-2" />
               Name *
             </label>
             <input
@@ -124,15 +124,17 @@ export default function LeadForm({
               required
               value={form.name}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+              placeholder="Enter full name"
             />
           </div>
 
-          <div>
+          <div className="space-y-2">
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
+              className="flex items-center text-sm font-medium text-gray-700"
             >
+              <Mail className="h-4 w-4 mr-2" />
               Email *
             </label>
             <input
@@ -142,16 +144,18 @@ export default function LeadForm({
               required
               value={form.email}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+              placeholder="email@example.com"
             />
           </div>
 
-          <div>
+          <div className="space-y-2">
             <label
               htmlFor="phone"
-              className="block text-sm font-medium text-gray-700"
+              className="flex items-center text-sm font-medium text-gray-700"
             >
-              Phone*
+              <Phone className="h-4 w-4 mr-2" />
+              Phone *
             </label>
             <input
               id="phone"
@@ -159,30 +163,17 @@ export default function LeadForm({
               value={form.phone}
               required
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+              placeholder="+1 (555) 123-4567"
             />
           </div>
-          <div>
-            <label
-              htmlFor="address"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Address*
-            </label>
-            <input
-              id="address"
-              name="address"
-              required
-              value={form.address}
-              onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-            />
-          </div>
-          <div>
+
+          <div className="space-y-2">
             <label
               htmlFor="source"
-              className="block text-sm font-medium text-gray-700"
+              className="flex items-center text-sm font-medium text-gray-700"
             >
+              <Globe className="h-4 w-4 mr-2" />
               Source
             </label>
             <input
@@ -190,36 +181,68 @@ export default function LeadForm({
               name="source"
               value={form.source}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+              placeholder="How did you find this lead?"
             />
           </div>
+        </div>
 
-          <div>
-            <label
-              htmlFor="notes"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Notes
-            </label>
-            <textarea
-              id="notes"
-              name="notes"
-              rows={3}
-              value={form.notes}
-              onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+        <div className="space-y-2">
+          <label
+            htmlFor="address"
+            className="flex items-center text-sm font-medium text-gray-700"
           >
-            {isSubmitting ? "Submitting..." : "Submit Lead"}
-          </button>
-        </form>
-      </div>
+            <MapPin className="h-4 w-4 mr-2" />
+            Address *
+          </label>
+          <input
+            id="address"
+            name="address"
+            required
+            value={form.address}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+            placeholder="Full business address"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label
+            htmlFor="notes"
+            className="flex items-center text-sm font-medium text-gray-700"
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            Notes
+          </label>
+          <textarea
+            id="notes"
+            name="notes"
+            rows={4}
+            value={form.notes}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+            placeholder="Additional information about this lead..."
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+        >
+          {isSubmitting ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              Submitting...
+            </>
+          ) : (
+            <>
+              <Send className="h-4 w-4" />
+              Submit Lead
+            </>
+          )}
+        </button>
+      </form>
     </div>
   );
 }
