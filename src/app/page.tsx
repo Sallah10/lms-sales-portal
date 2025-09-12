@@ -7,6 +7,8 @@ import LeadForm from "@/components/LeaadForm";
 import BulkLeadUpload from "@/components/BulkLeadUpload";
 import Image from "next/image";
 import logo from "../../public/1techlink no bg.png";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import {
   User,
@@ -93,7 +95,18 @@ export default function HomePage() {
                 <User className="h-5 w-5" />
                 <span className="font-medium">{session.user?.name}</span>
               </div>
-
+              <div className="flex flex-col md:flex-row items-center gap-4">
+                <Link href="/">
+                  <Button variant="ghost" size="sm">
+                    Submit Lead
+                  </Button>
+                </Link>
+                <Link href="/my-leads">
+                  <Button variant="ghost" size="sm">
+                    My Leads
+                  </Button>
+                </Link>
+              </div>
               <button
                 onClick={() => redirect("/api/auth/signout")}
                 className="flex items-center gap-2 text-gray-600 hover:text-gray-900 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -118,7 +131,8 @@ export default function HomePage() {
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div
-            className="fixed inset-0 bg-black bg-opacity-25"
+            // bg-black
+            className="fixed inset-0 backdrop-blur-sm bg-opacity-25"
             onClick={() => setMobileMenuOpen(false)}
           />
           <div className="fixed inset-y-0 right-0 w-full max-w-sm bg-white shadow-xl">
@@ -144,7 +158,18 @@ export default function HomePage() {
                   <p className="text-sm text-gray-600">{session.user?.email}</p>
                 </div>
               </div>
-
+              <div className="flex items-center gap-4">
+                <Link href="/">
+                  <Button variant="ghost" size="sm">
+                    Submit Lead
+                  </Button>
+                </Link>
+                <Link href="/my-leads">
+                  <Button variant="ghost" size="sm">
+                    My Leads
+                  </Button>
+                </Link>
+              </div>
               <button
                 onClick={() => redirect("/api/auth/signout")}
                 className="w-full flex items-center gap-3 p-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -169,6 +194,7 @@ export default function HomePage() {
                 Submit new leads or upload multiple leads at once.
               </p>
             </div>
+
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <BarChart3 className="h-4 w-4" />
               <span>Sales Representative</span>
@@ -235,7 +261,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="mt-12 py-6 border-t border-gray-200 bg-white">
         <div className="max-w-4xl mx-auto px-4 text-center text-sm text-gray-600">
-          <p>© {new Date().getFullYear()} TechLink. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} 1TechLink. All rights reserved.</p>
         </div>
       </footer>
     </div>
