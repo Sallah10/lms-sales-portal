@@ -13,7 +13,7 @@ export async function GET() {
 
     // Call the INTERNAL system's export API
     const internalResponse = await fetch(
-      `${process.env.INTERNAL_API_URL}/api/leads/export?myLeads=true`,
+      `${process.env.INTERNAL_API_URL}/api/leads/export?myLeads=true&includeService=true`,
       {
         headers: {
           "Content-Type": "application/json",

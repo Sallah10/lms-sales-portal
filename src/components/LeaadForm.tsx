@@ -2,7 +2,29 @@
 "use client";
 
 import { useState } from "react";
-import { User, Mail, Phone, MapPin, Globe, FileText, Send } from "lucide-react";
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Globe,
+  FileText,
+  Send,
+  Building,
+  AlertCircle,
+} from "lucide-react";
+
+//  available services/modules
+const AVAILABLE_SERVICES = [
+  "Chat with a doctor",
+  "Chat with a lawyer",
+  "Open Market",
+  "Pharmacies",
+  "Logistics",
+  "Store",
+  "Gadgets and Accessories",
+  "Foods & Drinks",
+];
 
 export default function LeadForm({
   salesUserId,
@@ -18,6 +40,8 @@ export default function LeadForm({
     source: "",
     notes: "",
     address: "",
+    service: "",
+    priority: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<{
@@ -66,6 +90,8 @@ export default function LeadForm({
           source: "",
           notes: "",
           address: "",
+          service: "",
+          priority: "MEDIUM",
         });
       } else {
         setMessage({
@@ -82,7 +108,9 @@ export default function LeadForm({
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -110,13 +138,14 @@ export default function LeadForm({
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Name Field */}
           <div className="space-y-2">
             <label
               htmlFor="name"
               className="flex items-center text-sm font-medium text-gray-700"
             >
               <User className="h-4 w-4 mr-2" />
-              Name *
+              Company/Partner Name *
             </label>
             <input
               id="name"
@@ -125,10 +154,10 @@ export default function LeadForm({
               value={form.name}
               onChange={handleChange}
               className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-              placeholder="Enter full name"
+              placeholder="Enter company/partner name"
             />
           </div>
-
+          {/* Email Field */}
           <div className="space-y-2">
             <label
               htmlFor="email"
@@ -145,7 +174,7 @@ export default function LeadForm({
               value={form.email}
               onChange={handleChange}
               className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-              placeholder="email@example.com"
+              placeholder="email@company.com"
             />
           </div>
 
@@ -167,7 +196,54 @@ export default function LeadForm({
               placeholder="+1 (555) 123-4567"
             />
           </div>
+          {/* Service/Module Field */}
+          <div className="space-y-2">
+            <label
+              htmlFor="service"
+              className="flex items-center text-sm font-medium text-gray-700"
+            >
+              <Building className="h-4 w-4 mr-2" />
+              Service/Module *
+            </label>
+            <select
+              id="service"
+              name="service"
+              required
+              value={form.service}
+              onChange={handleChange}
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+            >
+              <option value="">Select a service</option>
+              {AVAILABLE_SERVICES.map((service) => (
+                <option key={service} value={service}>
+                  {service}
+                </option>
+              ))}
+            </select>
+          </div>
 
+          {/* Priority Field */}
+          <div className="space-y-2">
+            <label
+              htmlFor="priority"
+              className="flex items-center text-sm font-medium text-gray-700"
+            >
+              <AlertCircle className="h-4 w-4 mr-2" />
+              Priority *
+            </label>
+            <select
+              id="priority"
+              name="priority"
+              required
+              value={form.priority}
+              onChange={handleChange}
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+            >
+              <option value="LOW">Low</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="HIGH">High</option>
+            </select>
+          </div>
           <div className="space-y-2">
             <label
               htmlFor="source"

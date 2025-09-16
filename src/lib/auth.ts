@@ -89,7 +89,7 @@ export const authOptions: AuthOptions = {
   },
   cookies: {
     sessionToken: {
-      name: `next-auth.session-token`,
+      name: `next-auth.session-token-external`,
       options: {
         httpOnly: true,
         sameSite: "lax",

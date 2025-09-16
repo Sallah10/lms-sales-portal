@@ -1,4 +1,4 @@
-// lms-sales-portal/src/app/my-leads/page.tsx
+// lms-sales-portal/src/app/my-leads/page.tsx (FIXED)
 "use client";
 
 import { useSession } from "next-auth/react";
@@ -26,6 +26,9 @@ import {
   Phone,
   Calendar,
   User,
+  Briefcase,
+  Search,
+  Filter,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -35,21 +38,40 @@ interface Lead {
   email: string;
   phone?: string;
   address?: string;
+  service?: string;
   source?: string;
   status?: string;
   priority: string;
   nextFollowUp?: string;
   createdAt: string;
+  notes?: string;
 }
+
+// Get all possible statuses from your database
+const ALL_STATUSES = [
+  "NEW",
+  "REVIEWED",
+  "VERIFIED",
+  "REJECTED",
+  "INVALID",
+  "PROPOSAL_SENT",
+  "PROPOSAL_CONFIRMED",
+  "AGREED",
+  "AWAITING_ONBOARDING",
+  "ONBOARDING",
+  "ONBOARDED",
+];
 
 export default function MyLeadsPage() {
   const { data: session, status } = useSession();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
+  const [serviceFilter, setServiceFilter] = useState("all");
 
   // Redirect if not authenticated
   if (status === "unauthenticated") {
@@ -63,25 +85,8 @@ export default function MyLeadsPage() {
   }, [session]);
 
   useEffect(() => {
-    // Filter leads based on search and filters
-    const filtered = leads.filter((lead) => {
-      const matchesSearch =
-        searchTerm === "" ||
-        lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (lead.phone &&
-          lead.phone.toLowerCase().includes(searchTerm.toLowerCase()));
-
-      const matchesStatus =
-        statusFilter === "all" || lead.status === statusFilter;
-      const matchesPriority =
-        priorityFilter === "all" || lead.priority === priorityFilter;
-
-      return matchesSearch && matchesStatus && matchesPriority;
-    });
-
-    setFilteredLeads(filtered);
-  }, [leads, searchTerm, statusFilter, priorityFilter]);
+    filterLeads();
+  }, [leads, searchTerm, statusFilter, priorityFilter, serviceFilter]);
 
   const fetchMyLeads = async () => {
     try {
@@ -89,29 +94,77 @@ export default function MyLeadsPage() {
       const response = await fetch("/api/my-leads");
 
       if (!response.ok) {
-        throw new Error("Failed to fetch leads");
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
       setLeads(data.leads || []);
     } catch (err) {
       console.error("Error fetching leads:", err);
-      toast.error("Failed to load your leads");
+      toast.error("Failed to load your leads. Please try again.");
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchMyLeads();
+  };
+
+  const filterLeads = () => {
+    const filtered = leads.filter((lead) => {
+      const matchesSearch =
+        searchTerm === "" ||
+        lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (lead.phone &&
+          lead.phone.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (lead.service &&
+          lead.service.toLowerCase().includes(searchTerm.toLowerCase()));
+
+      const matchesStatus =
+        statusFilter === "all" || lead.status === statusFilter;
+
+      const matchesPriority =
+        priorityFilter === "all" || lead.priority === priorityFilter;
+
+      const matchesService =
+        serviceFilter === "all" || lead.service === serviceFilter;
+
+      return (
+        matchesSearch && matchesStatus && matchesPriority && matchesService
+      );
+    });
+
+    setFilteredLeads(filtered);
   };
 
   const handleExport = async () => {
     try {
+      toast.loading("Preparing export...");
       const response = await fetch("/api/my-leads/export");
-      if (!response.ok) throw new Error("Export failed");
+
+      if (!response.ok) {
+        throw new Error("Export failed");
+      }
 
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = downloadUrl;
-      link.download = `my-leads-${new Date().toISOString().split("T")[0]}.csv`;
+
+      // Get filename from content-disposition header or use default
+      const contentDisposition = response.headers.get("content-disposition");
+      let filename = `my-leads-${new Date().toISOString().split("T")[0]}.csv`;
+
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+        if (filenameMatch) filename = filenameMatch[1];
+      }
+
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -123,6 +176,15 @@ export default function MyLeadsPage() {
       toast.error("Failed to export leads");
     }
   };
+
+  // Get unique services for filter
+  const uniqueServices = Array.from(
+    new Set(
+      leads
+        .map((lead) => lead.service)
+        .filter((service): service is string => Boolean(service))
+    )
+  );
 
   if (status === "loading" || loading) {
     return (
@@ -184,11 +246,14 @@ export default function MyLeadsPage() {
               <div className="flex items-center gap-4">
                 <Button
                   variant="outline"
-                  onClick={fetchMyLeads}
+                  onClick={handleRefresh}
+                  disabled={refreshing}
                   className="flex items-center gap-2"
                 >
-                  <RefreshCw className="h-4 w-4" />
-                  Refresh
+                  <RefreshCw
+                    className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+                  />
+                  {refreshing ? "Refreshing..." : "Refresh"}
                 </Button>
                 <Button
                   onClick={handleExport}
@@ -205,13 +270,16 @@ export default function MyLeadsPage() {
         {/* Filters */}
         <Card className="mb-6">
           <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Input
-                placeholder="Search leads..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search leads..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
 
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger>
@@ -219,12 +287,11 @@ export default function MyLeadsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="NEW">New</SelectItem>
-                  <SelectItem value="CONTACTED">Contacted</SelectItem>
-                  <SelectItem value="QUALIFIED">Qualified</SelectItem>
-                  <SelectItem value="PROPOSAL">Proposal Sent</SelectItem>
-                  <SelectItem value="NEGOTIATION">Negotiation</SelectItem>
-                  <SelectItem value="CLOSED">Closed</SelectItem>
+                  {ALL_STATUSES.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
@@ -237,6 +304,20 @@ export default function MyLeadsPage() {
                   <SelectItem value="HIGH">High</SelectItem>
                   <SelectItem value="MEDIUM">Medium</SelectItem>
                   <SelectItem value="LOW">Low</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={serviceFilter} onValueChange={setServiceFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Services" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Services</SelectItem>
+                  {uniqueServices.map((service) => (
+                    <SelectItem key={service} value={service}>
+                      {service}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -292,6 +373,13 @@ export default function MyLeadsPage() {
                           </div>
                         )}
 
+                        {lead.service && (
+                          <div className="flex items-center gap-2">
+                            <Briefcase className="h-4 w-4 flex-shrink-0" />
+                            <span>{lead.service}</span>
+                          </div>
+                        )}
+
                         {lead.nextFollowUp && (
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4 flex-shrink-0" />
@@ -341,7 +429,7 @@ export default function MyLeadsPage() {
                         >
                           <Link href={`/leads/${lead.id}/edit`}>
                             <Edit className="h-4 w-4 mr-1" />
-                            Edit
+                            Edit Notes
                           </Link>
                         </Button>
                         <Button
