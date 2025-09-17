@@ -13,6 +13,7 @@ export async function POST(req: Request) {
       address,
       service,
       priority,
+      assets,
       salesUserId,
       salesUserEmail,
     } = body;
@@ -26,7 +27,7 @@ export async function POST(req: Request) {
 
     // Call the INTERNAL system's API to create the lead
     const internalResponse = await fetch(
-      `${process.env.INTERNAL_API_URL}/api/leads`,
+      `${process.env.INTERNAL_API_URL}/api/external/leads`,
       {
         method: "POST",
         headers: {
@@ -42,6 +43,7 @@ export async function POST(req: Request) {
           address: address || "",
           service: service || "",
           priority: priority || "MEDIUM",
+          assets: assets || "",
           salesUserId,
           salesUserEmail,
         }),

@@ -1,4 +1,4 @@
-// lms-sales-portal/src/app/my-leads/page.tsx (FIXED)
+// lms-sales-portal/src/app/my-leads/page.tsx (ENHANCED)
 "use client";
 
 import { useSession } from "next-auth/react";
@@ -29,6 +29,10 @@ import {
   Briefcase,
   Search,
   Filter,
+  Table,
+  LayoutGrid,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -40,11 +44,15 @@ interface Lead {
   address?: string;
   service?: string;
   source?: string;
-  status?: string;
+  status?: {
+    id: string;
+    name: string;
+  };
   priority: string;
   nextFollowUp?: string;
   createdAt: string;
   notes?: string;
+  assets?: string;
 }
 
 // Get all possible statuses from your database
@@ -62,6 +70,8 @@ const ALL_STATUSES = [
   "ONBOARDED",
 ];
 
+type ViewMode = "cards" | "table";
+
 export default function MyLeadsPage() {
   const { data: session, status } = useSession();
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -72,6 +82,9 @@ export default function MyLeadsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [serviceFilter, setServiceFilter] = useState("all");
+  const [viewMode, setViewMode] = useState<ViewMode>("cards");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   // Redirect if not authenticated
   if (status === "unauthenticated") {
@@ -87,6 +100,14 @@ export default function MyLeadsPage() {
   useEffect(() => {
     filterLeads();
   }, [leads, searchTerm, statusFilter, priorityFilter, serviceFilter]);
+
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredLeads.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredLeads.length / itemsPerPage);
+
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   const fetchMyLeads = async () => {
     try {
@@ -110,6 +131,7 @@ export default function MyLeadsPage() {
 
   const handleRefresh = () => {
     setRefreshing(true);
+    setCurrentPage(1);
     fetchMyLeads();
   };
 
@@ -125,7 +147,7 @@ export default function MyLeadsPage() {
           lead.service.toLowerCase().includes(searchTerm.toLowerCase()));
 
       const matchesStatus =
-        statusFilter === "all" || lead.status === statusFilter;
+        statusFilter === "all" || lead.status?.name === statusFilter;
 
       const matchesPriority =
         priorityFilter === "all" || lead.priority === priorityFilter;
@@ -139,6 +161,7 @@ export default function MyLeadsPage() {
     });
 
     setFilteredLeads(filtered);
+    setCurrentPage(1); // Reset to first page when filters change
   };
 
   const handleExport = async () => {
@@ -241,9 +264,32 @@ export default function MyLeadsPage() {
                 </p>
                 <p className="text-sm text-blue-600 mt-1">
                   {filteredLeads.length} match current filters
+                  {filteredLeads.length > 0 && (
+                    <> • Showing {currentItems.length} on this page</>
+                  )}
                 </p>
               </div>
               <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant={viewMode === "cards" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setViewMode("cards")}
+                    className="flex items-center gap-2"
+                  >
+                    <LayoutGrid className="h-4 w-4" />
+                    Cards
+                  </Button>
+                  <Button
+                    variant={viewMode === "table" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setViewMode("table")}
+                    className="flex items-center gap-2"
+                  >
+                    <Table className="h-4 w-4" />
+                    Table
+                  </Button>
+                </div>
                 <Button
                   variant="outline"
                   onClick={handleRefresh}
@@ -324,7 +370,7 @@ export default function MyLeadsPage() {
           </CardContent>
         </Card>
 
-        {/* Leads List */}
+        {/* Leads Display */}
         {filteredLeads.length === 0 ? (
           <Card>
             <CardContent className="p-12 text-center">
@@ -349,107 +395,282 @@ export default function MyLeadsPage() {
               </Button>
             </CardContent>
           </Card>
-        ) : (
-          <div className="grid gap-6">
-            {filteredLeads.map((lead) => (
-              <Card key={lead.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                        {lead.name}
-                      </h3>
+        ) : viewMode === "cards" ? (
+          <>
+            {/* Card View */}
+            <div className="grid gap-6">
+              {currentItems.map((lead) => (
+                <Card
+                  key={lead.id}
+                  className="hover:shadow-md transition-shadow"
+                >
+                  <CardContent className="p-6">
+                    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                          {lead.name}
+                        </h3>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-                        <div className="flex items-center gap-2">
-                          <Mail className="h-4 w-4 flex-shrink-0" />
-                          <span className="truncate">{lead.email}</span>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+                          <div className="flex items-center gap-2">
+                            <Mail className="h-4 w-4 flex-shrink-0" />
+                            <span className="truncate">{lead.email}</span>
+                          </div>
+
+                          {lead.phone && (
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-4 w-4 flex-shrink-0" />
+                              <span>{lead.phone}</span>
+                            </div>
+                          )}
+
+                          {lead.service && (
+                            <div className="flex items-center gap-2">
+                              <Briefcase className="h-4 w-4 flex-shrink-0" />
+                              <span>{lead.service}</span>
+                            </div>
+                          )}
+
+                          {lead.nextFollowUp && (
+                            <div className="flex items-center gap-2">
+                              <Calendar className="h-4 w-4 flex-shrink-0" />
+                              <span>
+                                Follow up:{" "}
+                                {new Date(
+                                  lead.nextFollowUp
+                                ).toLocaleDateString()}
+                              </span>
+                            </div>
+                          )}
+
+                          {lead.source && (
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">Source:</span>
+                              <span>{lead.source}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-3 min-w-[140px]">
+                        <div className="flex flex-col gap-1">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              lead.priority === "HIGH"
+                                ? "bg-red-100 text-red-800"
+                                : lead.priority === "MEDIUM"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-green-100 text-green-800"
+                            }`}
+                          >
+                            {lead.priority}
+                          </span>
+
+                          {lead.status && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              {lead.status.name}
+                            </span>
+                          )}
                         </div>
 
-                        {lead.phone && (
-                          <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4 flex-shrink-0" />
-                            <span>{lead.phone}</span>
-                          </div>
-                        )}
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            asChild
+                            className="flex-1"
+                          >
+                            <Link href={`/leads/${lead.id}/edit`}>
+                              <Edit className="h-4 w-4 mr-1" />
+                              Edit
+                            </Link>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            asChild
+                            className="flex-1"
+                          >
+                            <Link href={`/leads/${lead.id}`}>
+                              <Eye className="h-4 w-4 mr-1" />
+                              View
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
 
-                        {lead.service && (
-                          <div className="flex items-center gap-2">
-                            <Briefcase className="h-4 w-4 flex-shrink-0" />
-                            <span>{lead.service}</span>
-                          </div>
-                        )}
+            {/* Pagination for Cards */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-8">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => paginate(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
 
-                        {lead.nextFollowUp && (
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 flex-shrink-0" />
-                            <span>
-                              Follow up:{" "}
-                              {new Date(lead.nextFollowUp).toLocaleDateString()}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (page) => (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => paginate(page)}
+                    >
+                      {page}
+                    </Button>
+                  )
+                )}
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => paginate(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            {/* Table View */}
+            <Card>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b bg-gray-50">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Name
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Email
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Phone
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Service
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Priority
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {currentItems.map((lead) => (
+                        <tr key={lead.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="font-medium text-gray-900">
+                              {lead.name}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-gray-600">{lead.email}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-gray-600">
+                              {lead.phone || "-"}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-gray-600">
+                              {lead.service || "-"}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                lead.priority === "HIGH"
+                                  ? "bg-red-100 text-red-800"
+                                  : lead.priority === "MEDIUM"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-green-100 text-green-800"
+                              }`}
+                            >
+                              {lead.priority}
                             </span>
-                          </div>
-                        )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {lead.status && (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {lead.status.name}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex gap-2">
+                              <Button variant="outline" size="sm" asChild>
+                                <Link href={`/leads/${lead.id}/edit`}>
+                                  <Edit className="h-4 w-4" />
+                                </Link>
+                              </Button>
+                              <Button variant="outline" size="sm" asChild>
+                                <Link href={`/leads/${lead.id}`}>
+                                  <Eye className="h-4 w-4" />
+                                </Link>
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
 
-                        {lead.source && (
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">Source:</span>
-                            <span>{lead.source}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+            {/* Pagination for Table */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-8">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => paginate(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
 
-                    <div className="flex flex-col gap-3 min-w-[140px]">
-                      <div className="flex flex-col gap-1">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            lead.priority === "HIGH"
-                              ? "bg-red-100 text-red-800"
-                              : lead.priority === "MEDIUM"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-green-100 text-green-800"
-                          }`}
-                        >
-                          {lead.priority}
-                        </span>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (page) => (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => paginate(page)}
+                    >
+                      {page}
+                    </Button>
+                  )
+                )}
 
-                        {lead.status && (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            {lead.status}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          asChild
-                          className="flex-1"
-                        >
-                          <Link href={`/leads/${lead.id}/edit`}>
-                            <Edit className="h-4 w-4 mr-1" />
-                            Edit Notes
-                          </Link>
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          asChild
-                          className="flex-1"
-                        >
-                          <Link href={`/leads/${lead.id}`}>
-                            <Eye className="h-4 w-4 mr-1" />
-                            View
-                          </Link>
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => paginate(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>
