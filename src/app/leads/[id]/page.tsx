@@ -116,8 +116,8 @@ export default function LeadDetailPage() {
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col gap-4 md:gap-0 md:flex-row items-center justify-between">
+            <div className="flex  items-center gap-4">
               <Link href="/my-leads">
                 <Button variant="outline" size="sm">
                   <ArrowLeft className="h-4 w-4 mr-2" />

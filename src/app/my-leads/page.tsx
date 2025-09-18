@@ -222,7 +222,7 @@ export default function MyLeadsPage() {
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
+          <div className="flex  flex-col gap-4 md:flex-row md:gap-0 items-center justify-between">
             <div className="flex items-center gap-4">
               <Link href="/">
                 <Button variant="outline" size="sm">
@@ -254,9 +254,9 @@ export default function MyLeadsPage() {
         {/* Stats Card */}
         <Card className="mb-8 bg-blue-50 border-blue-200">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-blue-700">
+            <div className="flex flex-col md:flex-row gap-4 md:gap-0 items-center justify-between">
+              <div className="text-center md:text-left">
+                <p className="text-sm  font-medium text-blue-700">
                   Your Lead Portfolio
                 </p>
                 <p className="text-2xl font-bold text-blue-900">
@@ -269,7 +269,7 @@ export default function MyLeadsPage() {
                   )}
                 </p>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col md:flex-row  md items-center gap-4">
                 <div className="flex items-center gap-2">
                   <Button
                     variant={viewMode === "cards" ? "default" : "outline"}
@@ -290,24 +290,26 @@ export default function MyLeadsPage() {
                     Table
                   </Button>
                 </div>
-                <Button
-                  variant="outline"
-                  onClick={handleRefresh}
-                  disabled={refreshing}
-                  className="flex items-center gap-2"
-                >
-                  <RefreshCw
-                    className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
-                  />
-                  {refreshing ? "Refreshing..." : "Refresh"}
-                </Button>
-                <Button
-                  onClick={handleExport}
-                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
-                >
-                  <Download className="h-4 w-4" />
-                  Export
-                </Button>
+                <div className="flex items-center gap-2 md:flex-none">
+                  <Button
+                    variant="outline"
+                    onClick={handleRefresh}
+                    disabled={refreshing}
+                    className="flex items-center gap-2"
+                  >
+                    <RefreshCw
+                      className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+                    />
+                    {refreshing ? "Refreshing..." : "Refresh"}
+                  </Button>
+                  <Button
+                    onClick={handleExport}
+                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                  >
+                    <Download className="h-4 w-4" />
+                    Export
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>

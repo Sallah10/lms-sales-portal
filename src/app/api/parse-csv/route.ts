@@ -1,6 +1,8 @@
 // src/app/api/parse-csv/route.ts (FIXED)
 import { NextRequest, NextResponse } from "next/server";
 import { parse } from "csv-parse/sync";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 
 interface CsvRecord {
   name?: string;
@@ -61,6 +63,10 @@ function normalizeRecord(record: CsvRecord): CsvRecord {
 }
 
 export async function POST(req: NextRequest) {
+  const session = await getServerSession(authOptions); // Retrieve session
+  if (!session) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File;
@@ -178,6 +184,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           leads: validLeads,
           salesRepId,
+          salesUserEmail: session.user.email,
         }),
       }
     );

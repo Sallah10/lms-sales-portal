@@ -159,11 +159,11 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <Link href="/">
+                {/* <Link href="/">
                   <Button variant="ghost" size="sm">
                     Submit Lead
                   </Button>
-                </Link>
+                </Link> */}
                 <Link href="/my-leads">
                   <Button variant="ghost" size="sm">
                     My Leads
