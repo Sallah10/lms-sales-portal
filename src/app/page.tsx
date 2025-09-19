@@ -96,11 +96,11 @@ export default function HomePage() {
                 <span className="font-medium">{session.user?.name}</span>
               </div>
               <div className="flex flex-col md:flex-row items-center gap-4">
-                <Link href="/">
+                {/* <Link href="/">
                   <Button variant="ghost" size="sm">
                     Submit Lead
                   </Button>
-                </Link>
+                </Link> */}
                 <Link href="/my-leads">
                   <Button variant="ghost" size="sm">
                     My Leads
