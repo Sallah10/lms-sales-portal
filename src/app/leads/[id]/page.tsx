@@ -59,6 +59,7 @@ export default function LeadDetailPage() {
     if (session?.user?.id && leadId) {
       fetchLead();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, leadId]);
 
   const fetchLead = async () => {

@@ -1,11 +1,11 @@
 // lms-sales-portal/src/app/api/leads/[id]/notes/route.ts
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 
 export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -14,8 +14,8 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const leadId = params.id;
-    const { notes } = await req.json();
+    const leadId = (await params).id;
+    const { notes } = await request.json();
 
     // Call internal API to update notes
     const internalResponse = await fetch(

@@ -6,7 +6,8 @@ import { redirect } from "next/navigation";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+//  CardHeader, CardTitle
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -28,7 +29,7 @@ import {
   User,
   Briefcase,
   Search,
-  Filter,
+  // Filter,
   Table,
   LayoutGrid,
   ChevronLeft,
@@ -99,6 +100,7 @@ export default function MyLeadsPage() {
 
   useEffect(() => {
     filterLeads();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leads, searchTerm, statusFilter, priorityFilter, serviceFilter]);
 
   // Pagination logic

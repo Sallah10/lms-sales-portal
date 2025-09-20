@@ -89,6 +89,7 @@ export default function EditLeadPage() {
     if (session?.user?.id && leadId) {
       fetchLead();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, leadId]);
 
   const fetchLead = async () => {

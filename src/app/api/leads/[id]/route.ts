@@ -5,11 +5,11 @@ import { authOptions } from "@/lib/auth";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    const leadId = params.id;
+    const leadId = (await params).id;
 
     if (!session || !session.user?.id) {
       return new NextResponse("Unauthorized", { status: 401 });
@@ -57,11 +57,11 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    const leadId = params.id;
+    const leadId = (await params).id;
     const body = await request.json();
 
     if (!session || !session.user?.id) {
