@@ -120,7 +120,7 @@ export default function LoginPage() {
           )}
 
           {/* Remember Me & Forgot Password */}
-          <div className="flex items-center justify-between">
+          {/* <div className="flex items-center justify-between">
             <div className="flex items-center">
               <input
                 id="remember-me"
@@ -144,7 +144,7 @@ export default function LoginPage() {
                 Forgot your password?
               </Link>
             </div>
-          </div>
+          </div> */}
 
           {/* Login Button */}
           <div>
