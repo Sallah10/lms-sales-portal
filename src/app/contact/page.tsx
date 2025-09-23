@@ -67,8 +67,8 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container max-w-4xl">
+    <div className="min-h-screen  bg-gray-50 py-8">
+      <div className="container p-8 items-center">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="bg-blue-100 p-3 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
@@ -86,7 +86,9 @@ export default function ContactPage() {
           {/* Contact Form */}
           <Card className="shadow-lg">
             <CardHeader className="bg-blue-50">
-              <CardTitle className="text-blue-900">Send a Message</CardTitle>
+              <CardTitle className="text-blue-900 p-3">
+                Send a Message
+              </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
               <form onSubmit={handleSubmit} className="space-y-4">

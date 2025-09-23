@@ -9,6 +9,7 @@ import Image from "next/image";
 import logo from "../../public/1techlink no bg.png";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { signOut } from "next-auth/react";
 import { useState } from "react";
 import {
   User,
@@ -96,11 +97,6 @@ export default function HomePage() {
                 <span className="font-medium">{session.user?.name}</span>
               </div>
               <div className="flex flex-col md:flex-row items-center gap-4">
-                {/* <Link href="/">
-                  <Button variant="ghost" size="sm">
-                    Submit Lead
-                  </Button>
-                </Link> */}
                 <Link href="/my-leads">
                   <Button variant="ghost" size="sm">
                     My Leads
@@ -159,11 +155,6 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                {/* <Link href="/">
-                  <Button variant="ghost" size="sm">
-                    Submit Lead
-                  </Button>
-                </Link> */}
                 <Link href="/my-leads">
                   <Button variant="ghost" size="sm">
                     My Leads
@@ -171,7 +162,8 @@ export default function HomePage() {
                 </Link>
               </div>
               <button
-                onClick={() => redirect("/api/auth/signout")}
+                // onClick={() => signOut({ callbackUrl: "/login" })}
+                onClick={() => signOut({ callbackUrl: "/login" })}
                 className="w-full flex items-center gap-3 p-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               >
                 <LogOut className="h-5 w-5" />
