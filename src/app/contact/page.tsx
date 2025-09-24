@@ -170,7 +170,7 @@ export default function ContactPage() {
                   <Mail className="h-5 w-5 text-blue-600" />
                   <div>
                     <p className="font-medium">Email Support</p>
-                    <p className="text-blue-600">support@yourcompany.com</p>
+                    <p className="text-blue-600">admin@1techlink.com</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
@@ -190,16 +190,16 @@ export default function ContactPage() {
               <CardContent>
                 <div className="space-y-2 text-sm">
                   <p>
-                    <strong>Monday - Friday:</strong> 8:00 AM - 8:00 PM EST
+                    <strong>Monday - Friday:</strong> 8:00 AM - 5:00 PM EST
                   </p>
-                  <p>
+                  {/* <p>
                     <strong>Saturday:</strong> 9:00 AM - 5:00 PM EST
                   </p>
                   <p>
                     <strong>Sunday:</strong> Emergency support only
-                  </p>
+                  </p> */}
                   <p className="text-xs text-gray-500 mt-3">
-                    * Response time typically under 2 hours during business
+                    * Response time typically under 5 hours during business
                     hours
                   </p>
                 </div>
