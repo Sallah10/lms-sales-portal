@@ -1,4 +1,4 @@
-// prisma/schema.prisma (Sales Portal)
+// prisma/schema.prisma (Sales Portal) - UPDATED
 generator client {
   provider = "prisma-client-js"
 }
@@ -6,20 +6,19 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String
-  email         String    @unique
-  password      String
-  role          String    @default("SALES") // All users here are SALES
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  accounts      Account[]
-  sessions      Session[]
+  id           String        @id @default(uuid())
+  name         String
+  email        String        @unique
+  password     String
+  role         Role
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  isActive     Boolean       @default(true)
+  accounts     Account[]
+  sessions     Session[]
 }
 
 model Account {
@@ -35,8 +34,7 @@ model Account {
   scope             String?
   id_token          String? @db.Text
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -46,6 +44,14 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+enum Role {
+  USER
+  ADMIN
+  SALES
+  PDM
+  CUSTOMER_CARE
+  VIEWER
 }

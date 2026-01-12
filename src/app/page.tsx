@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import LeadForm from "@/components/LeaadForm";
 import BulkLeadUpload from "@/components/BulkLeadUpload";
 import Image from "next/image";
-import logo from "../../public/1techlink no bg.png";
+import logo from "../../public/My_logo.png";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { signOut } from "next-auth/react";
