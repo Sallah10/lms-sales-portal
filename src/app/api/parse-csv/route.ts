@@ -9,15 +9,12 @@ interface CsvRecord {
   email?: string;
   phone?: string;
   address?: string;
+  service?: string;
   source?: string;
   notes?: string;
-  // Allow for common column name variations
-  company?: string;
-  contact?: string;
-  "company name"?: string;
-  "contact name"?: string;
-  "phone number"?: string;
-  "email address"?: string;
+  priority?: string;
+  assets?: string;
+  nextFollowUp?: string;
 }
 
 interface ValidLead {
@@ -25,48 +22,153 @@ interface ValidLead {
   email: string;
   phone: string;
   address: string;
+  service: string;
   source: string;
   notes: string;
+  priority: string;
+  assets?: string;
+  nextFollowUp?: string;
   salesRepId: string;
 }
 
-// Helper function to normalize column names
-function normalizeRecord(record: CsvRecord): CsvRecord {
-  const normalized: CsvRecord = {};
+// Improved helper function to normalize column names
+function normalizeRecord(record: Record<string, string>): CsvRecord {
+  const normalized: Record<string, string> = {};
+  const unknownFields: string[] = [];
 
   for (const [key, value] of Object.entries(record)) {
     const lowerKey = key.toLowerCase().trim();
 
+    // Map various column names to standard fields - ORDER MATTERS!
+    // Check for specific column names FIRST, then general keywords
+
+    // NAME/COMPANY MAPPING - Check specific names first
     if (
-      lowerKey.includes("name") ||
-      lowerKey.includes("company") ||
+      lowerKey === "partners name" ||
+      lowerKey === "company name" ||
+      lowerKey === "business name" ||
+      lowerKey.includes("partner name") ||
+      (lowerKey.includes("name") && !lowerKey.includes("address"))
+    ) {
+      normalized.name = value;
+    }
+    // EMAIL MAPPING
+    else if (
+      lowerKey === "email address" ||
+      lowerKey === "email" ||
+      lowerKey.includes("mail")
+    ) {
+      normalized.email = value;
+    }
+    // ADDRESS MAPPING - Be specific about address fields
+    else if (
+      lowerKey === "business address" ||
+      lowerKey === "address" ||
+      lowerKey === "physical address" ||
+      (lowerKey.includes("address") && !lowerKey.includes("name"))
+    ) {
+      normalized.address = value;
+    }
+    // PHONE MAPPING
+    else if (
+      lowerKey === "phone number" ||
+      lowerKey === "phone" ||
+      lowerKey.includes("tel") ||
+      lowerKey.includes("mobile") ||
       lowerKey.includes("contact")
     ) {
-      normalized.name = value || normalized.name;
-    } else if (lowerKey.includes("email")) {
-      normalized.email = value || normalized.email;
-    } else if (lowerKey.includes("phone") || lowerKey.includes("tel")) {
-      normalized.phone = value || normalized.phone;
-    } else if (lowerKey.includes("address") || lowerKey.includes("location")) {
-      normalized.address = value || normalized.address;
-    } else if (lowerKey.includes("source") || lowerKey.includes("origin")) {
-      normalized.source = value || normalized.source;
-    } else if (lowerKey.includes("note") || lowerKey.includes("comment")) {
-      normalized.notes = value || normalized.notes;
+      normalized.phone = value;
+    }
+    // SERVICE MAPPING
+    else if (
+      lowerKey === "service type" ||
+      lowerKey === "service" ||
+      lowerKey.includes("product") ||
+      lowerKey.includes("module") ||
+      lowerKey.includes("industry") ||
+      lowerKey.includes("category")
+    ) {
+      normalized.service = value;
+    }
+    // SOURCE MAPPING
+    else if (
+      lowerKey === "lead source" ||
+      lowerKey === "source" ||
+      lowerKey.includes("origin") ||
+      lowerKey.includes("referral") ||
+      lowerKey.includes("campaign")
+    ) {
+      normalized.source = value;
+    }
+    // NOTES MAPPING
+    else if (
+      lowerKey === "additional notes" ||
+      lowerKey === "notes" ||
+      lowerKey.includes("comment") ||
+      lowerKey.includes("remark") ||
+      lowerKey.includes("description")
+    ) {
+      normalized.notes = value;
+    }
+    // PRIORITY MAPPING
+    else if (
+      lowerKey === "priority level" ||
+      lowerKey === "priority" ||
+      lowerKey.includes("urgent")
+    ) {
+      normalized.priority = value;
+    }
+    // NEXT FOLLOW-UP MAPPING
+    else if (
+      lowerKey === "next follow-up date" ||
+      lowerKey === "next follow-up" ||
+      lowerKey.includes("follow") ||
+      (lowerKey.includes("next") && lowerKey.includes("date"))
+    ) {
+      normalized.nextFollowUp = value;
+    }
+    // ASSETS MAPPING
+    else if (
+      lowerKey === "assets" ||
+      lowerKey === "assets/equipment" ||
+      lowerKey.includes("equipment") ||
+      lowerKey.includes("vehicle") ||
+      lowerKey.includes("fleet") ||
+      lowerKey.includes("inventory")
+    ) {
+      normalized.assets = value;
     } else {
-      // Keep original key for unknown fields
-      normalized[key as keyof CsvRecord] = value;
+      // For unknown fields, collect them to add later with proper tagging
+      if (value && value.trim() !== "") {
+        unknownFields.push(`${key}: ${value}`);
+      }
     }
   }
 
-  return normalized;
+  // Add unknown fields to notes with proper tagging and spacing
+  if (unknownFields.length > 0) {
+    const unknownFieldsSection = `\n\n--- UNKNOWN FIELDS ---\n${unknownFields.join(
+      "\n"
+    )}`;
+
+    if (normalized.notes) {
+      // If there are existing notes, append the unknown fields section
+      normalized.notes += unknownFieldsSection;
+    } else {
+      // If no existing notes, create notes with just the unknown fields
+      normalized.notes = unknownFieldsSection;
+    }
+  }
+
+  return normalized as CsvRecord;
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions); // Retrieve session
+  const session = await getServerSession(authOptions);
   if (!session) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
+
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File;
@@ -95,7 +197,7 @@ export async function POST(req: NextRequest) {
     const fileBuffer = await file.arrayBuffer();
     const fileContent = Buffer.from(fileBuffer).toString("utf-8");
 
-    let records: CsvRecord[];
+    let records: Record<string, string>[];
     try {
       records = parse(fileContent, {
         columns: true,
@@ -120,16 +222,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    console.log("Raw CSV records:", records); // DEBUG
+
     // Validate required fields in each record
     const validLeads: ValidLead[] = [];
     const errors = [];
 
     for (let i = 0; i < records.length; i++) {
       const rawRecord = records[i];
-      const rowNumber = i + 2; // +2 because of header row and 0-based index
+      const rowNumber = i + 2;
 
-      // Normalize the record to handle different column names
+      console.log(`Row ${rowNumber} raw:`, rawRecord); // DEBUG
+
       const record = normalizeRecord(rawRecord);
+
+      console.log(`Row ${rowNumber} normalized:`, record); // DEBUG
 
       // Check required fields
       if (!record.name) {
@@ -150,12 +257,16 @@ export async function POST(req: NextRequest) {
       }
 
       validLeads.push({
-        name: record.name,
-        email: record.email,
-        phone: record.phone || "", // Make phone optional
-        address: record.address || "", // Make address optional
-        source: record.source || "Bulk Upload",
+        name: record.name || "",
+        email: record.email || "",
+        phone: record.phone || "",
+        address: record.address || "",
+        service: record.service || "",
+        source: record.source || "CSV Import",
         notes: record.notes || "",
+        priority: record.priority || "MEDIUM",
+        assets: record.assets || "",
+        nextFollowUp: record.nextFollowUp,
         salesRepId: salesRepId,
       });
     }
@@ -174,7 +285,7 @@ export async function POST(req: NextRequest) {
 
     // Forward valid leads to the internal system
     const internalResponse = await fetch(
-      `${process.env.INTERNAL_API_URL}/api/external/leads/bulk`, // ← Changed to external endpoint
+      `${process.env.INTERNAL_API_URL}/api/external/leads/bulk`,
       {
         method: "POST",
         headers: {

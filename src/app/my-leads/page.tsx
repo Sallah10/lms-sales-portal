@@ -572,6 +572,9 @@ export default function MyLeadsPage() {
                           Status
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Next Follow-up
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Actions
                         </th>
                       </tr>
@@ -616,6 +619,15 @@ export default function MyLeadsPage() {
                                 {lead.status.name}
                               </span>
                             )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-gray-600">
+                              {lead.nextFollowUp
+                                ? new Date(
+                                    lead.nextFollowUp
+                                  ).toLocaleDateString()
+                                : "-"}
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex gap-2">

@@ -1,23 +1,26 @@
-// src/lib/auth.ts (Sales Portal)
+// src/lib/auth.ts (Sales Portal) - WITH DEBUGGING
 import NextAuth, { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
 
+// Extend NextAuth types to include 'role' and 'id' on session.user
+import { DefaultUser } from "next-auth";
+
 declare module "next-auth" {
   interface Session {
     user: {
-      name?: string | null;
+      id: string;
+      role: string;
       email?: string | null;
+      name?: string | null;
       image?: string | null;
-      role?: string;
-      id?: string;
     };
   }
-  interface User {
-    role?: string;
-    id?: string;
+  interface User extends DefaultUser {
+    role: string;
+    id: string;
   }
 }
 
@@ -31,40 +34,88 @@ export const authOptions: AuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
+        console.log("🔐 AUTHORIZE CALLED - Sales Portal");
+
         if (!credentials?.email || !credentials?.password) {
+          console.log("❌ Missing credentials");
           return null;
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        });
+        console.log("📧 Email:", credentials.email);
 
-        if (!user || !user.password) {
+        try {
+          const user = await prisma.user.findUnique({
+            where: { email: credentials.email },
+          });
+
+          console.log("👤 User found:", user);
+
+          if (!user) {
+            console.log("❌ No user found with this email");
+            return null;
+          }
+
+          if (!user.password) {
+            console.log("❌ User has no password");
+            return null;
+          }
+
+          console.log("🔍 Checking user details:");
+          console.log("   - Role:", user.role);
+          console.log("   - isActive:", user.isActive);
+          console.log("   - Has password:", !!user.password);
+
+          // Check if user is active
+          if (!user.isActive) {
+            console.log("❌ User is not active");
+            return null;
+          }
+
+          // Check if user is SALES role
+          if (user.role !== "SALES") {
+            console.log(
+              `❌ User role '${user.role}' is not allowed in sales portal`
+            );
+            return null;
+          }
+
+          console.log("🔑 Comparing passwords...");
+          const isValid = await bcrypt.compare(
+            credentials.password,
+            user.password
+          );
+
+          console.log("✅ Password valid:", isValid);
+
+          if (!isValid) {
+            console.log("❌ Invalid password");
+            return null;
+          }
+
+          console.log("🎉 AUTH SUCCESS - Returning user:", {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+          });
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+          };
+        } catch (error) {
+          console.error("💥 Auth error:", error);
           return null;
         }
-
-        const isValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        );
-
-        if (!isValid) {
-          return null;
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        };
       },
     }),
   ],
   callbacks: {
     async jwt({ token, user }) {
+      console.log("🔄 user:", user);
       if (user) {
-        // make sure id/email are preserved on the token
         token.role = user.role;
         token.sub = user.id;
         token.email = user.email;
@@ -72,6 +123,7 @@ export const authOptions: AuthOptions = {
       return token;
     },
     async session({ session, token }) {
+      console.log("🔄 token:", token);
       if (session?.user) {
         session.user.role = token.role as string;
         session.user.id = token.sub as string;
@@ -94,11 +146,12 @@ export const authOptions: AuthOptions = {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: process.env.NODE_ENV === "production", // Secure in production only
-        maxAge: 30 * 24 * 60 * 60, // ← 30 days for the cookie too
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 30 * 24 * 60 * 60,
       },
     },
   },
+  debug: true, // ✅ Enable NextAuth debug mode
 };
 
 export default NextAuth(authOptions);
